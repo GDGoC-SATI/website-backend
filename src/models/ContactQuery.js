@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const contactQuerySchema = new mongoose.Schema(
   {
@@ -29,6 +29,17 @@ const contactQuerySchema = new mongoose.Schema(
       type: String,
       enum: ['unread', 'read', 'replied'],
       default: 'unread',
+    },
+    adminReply: {
+      type: String,
+      default: '',
+    },
+    adminName: {
+      type: String,
+      default: '',
+    },
+    repliedAt: {
+      type: Date,
     },
   },
   { timestamps: true }

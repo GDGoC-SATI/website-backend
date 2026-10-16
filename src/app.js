@@ -1,3 +1,4 @@
+import { handleRealtimeStream } from './utils/realtimeService.js';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -100,6 +101,9 @@ app.use('/api/gallery', galleryRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/sections', sectionRoutes);
+
+// Real-Time Server-Sent Events (SSE) Stream
+app.get('/api/realtime/stream', handleRealtimeStream);
 
 // Catch 404 for unknown endpoints
 app.use((req, res) => {

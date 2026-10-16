@@ -1,4 +1,5 @@
 import GalleryAlbum from '../models/GalleryAlbum.js';
+import { broadcastRealtimeUpdate } from '../utils/realtimeService.js';
 
 export const getAlbums = async (req, res) => {
   try {
@@ -12,6 +13,7 @@ export const getAlbums = async (req, res) => {
 export const createAlbum = async (req, res) => {
   try {
     const album = await GalleryAlbum.create(req.body);
+    broadcastRealtimeUpdate('gallery', 'CREATE', album);
     res.status(201).json({ success: true, message: 'Album created', data: album });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -25,6 +27,7 @@ export const updateAlbum = async (req, res) => {
       runValidators: true,
     });
     if (!album) return res.status(404).json({ success: false, message: 'Album not found' });
+    broadcastRealtimeUpdate('gallery', 'UPDATE', album);
     res.status(200).json({ success: true, message: 'Album updated', data: album });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -35,6 +38,7 @@ export const deleteAlbum = async (req, res) => {
   try {
     const album = await GalleryAlbum.findByIdAndDelete(req.params.id);
     if (!album) return res.status(404).json({ success: false, message: 'Album not found' });
+    broadcastRealtimeUpdate('gallery', 'DELETE', { id: req.params.id });
     res.status(200).json({ success: true, message: 'Album deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -53,6 +57,7 @@ export const addImageToAlbum = async (req, res) => {
     if (!album.coverImage) album.coverImage = imageUrl;
     await album.save();
 
+    broadcastRealtimeUpdate('gallery', 'UPDATE', album);
     res.status(200).json({ success: true, message: 'Image added to album', data: album });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -71,6 +76,7 @@ export const removeImageFromAlbum = async (req, res) => {
     }
     await album.save();
 
+    broadcastRealtimeUpdate('gallery', 'UPDATE', album);
     res.status(200).json({ success: true, message: 'Image removed from album', data: album });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -90,6 +96,7 @@ export const reorderAlbums = async (req, res) => {
     await Promise.all(updates);
 
     const albums = await GalleryAlbum.find().sort({ order: 1 });
+    broadcastRealtimeUpdate('gallery', 'REORDER', albums);
     res.status(200).json({ success: true, message: 'Albums reordered', data: albums });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

@@ -1,9 +1,15 @@
 import Project from '../models/Project.js';
 import ProjectRequest from '../models/ProjectRequest.js';
+import { broadcastRealtimeUpdate } from '../utils/realtimeService.js';
 
 export const getProjects = async (req, res) => {
   try {
-    const projects = await Project.find().sort({ order: 1, createdAt: -1 });
+    const { category, featured } = req.query;
+    const query = {};
+    if (category && category !== 'All') query.category = category;
+    if (featured !== undefined) query.featured = featured === 'true';
+
+    const projects = await Project.find(query).sort({ order: 1, createdAt: -1 });
     res.status(200).json({ success: true, count: projects.length, data: projects });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -13,6 +19,7 @@ export const getProjects = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     const project = await Project.create(req.body);
+    broadcastRealtimeUpdate('projects', 'CREATE', project);
     res.status(201).json({ success: true, message: 'Project created successfully', data: project });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -26,6 +33,7 @@ export const updateProject = async (req, res) => {
       runValidators: true,
     });
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    broadcastRealtimeUpdate('projects', 'UPDATE', project);
     res.status(200).json({ success: true, message: 'Project updated successfully', data: project });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -36,6 +44,7 @@ export const deleteProject = async (req, res) => {
   try {
     const project = await Project.findByIdAndDelete(req.params.id);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+    broadcastRealtimeUpdate('projects', 'DELETE', { id: req.params.id });
     res.status(200).json({ success: true, message: 'Project deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -67,6 +76,7 @@ export const submitProjectRequest = async (req, res) => {
       status: 'pending',
     });
 
+    broadcastRealtimeUpdate('projectRequests', 'CREATE', request);
     res.status(201).json({
       success: true,
       message: 'Your project request has been submitted successfully! Our team will review it.',
@@ -106,6 +116,9 @@ export const approveProjectRequest = async (req, res) => {
     request.status = 'approved';
     await request.save();
 
+    broadcastRealtimeUpdate('projectRequests', 'UPDATE', request);
+    broadcastRealtimeUpdate('projects', 'CREATE', project);
+
     res.status(200).json({
       success: true,
       message: 'Project request approved and published to Projects list!',
@@ -125,6 +138,7 @@ export const updateProjectRequestStatus = async (req, res) => {
       { new: true }
     );
     if (!request) return res.status(404).json({ success: false, message: 'Request not found' });
+    broadcastRealtimeUpdate('projectRequests', 'UPDATE', request);
     res.status(200).json({ success: true, message: 'Status updated', data: request });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -134,6 +148,7 @@ export const updateProjectRequestStatus = async (req, res) => {
 export const deleteProjectRequest = async (req, res) => {
   try {
     await ProjectRequest.findByIdAndDelete(req.params.id);
+    broadcastRealtimeUpdate('projectRequests', 'DELETE', { id: req.params.id });
     res.status(200).json({ success: true, message: 'Request removed' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

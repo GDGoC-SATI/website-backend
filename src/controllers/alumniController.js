@@ -1,4 +1,5 @@
 import Alumni from '../models/Alumni.js';
+import { broadcastRealtimeUpdate } from '../utils/realtimeService.js';
 
 export const getAlumni = async (req, res) => {
   try {
@@ -12,6 +13,7 @@ export const getAlumni = async (req, res) => {
 export const createAlumni = async (req, res) => {
   try {
     const item = await Alumni.create(req.body);
+    broadcastRealtimeUpdate('alumni', 'CREATE', item);
     res.status(201).json({ success: true, message: 'Alumni created', data: item });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -25,6 +27,7 @@ export const updateAlumni = async (req, res) => {
       runValidators: true,
     });
     if (!item) return res.status(404).json({ success: false, message: 'Alumni not found' });
+    broadcastRealtimeUpdate('alumni', 'UPDATE', item);
     res.status(200).json({ success: true, message: 'Alumni updated', data: item });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -35,6 +38,7 @@ export const deleteAlumni = async (req, res) => {
   try {
     const item = await Alumni.findByIdAndDelete(req.params.id);
     if (!item) return res.status(404).json({ success: false, message: 'Alumni not found' });
+    broadcastRealtimeUpdate('alumni', 'DELETE', { id: req.params.id });
     res.status(200).json({ success: true, message: 'Alumni deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -54,6 +58,7 @@ export const reorderAlumni = async (req, res) => {
     await Promise.all(updates);
 
     const list = await Alumni.find().sort({ order: 1 });
+    broadcastRealtimeUpdate('alumni', 'REORDER', list);
     res.status(200).json({ success: true, message: 'Alumni order updated', data: list });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

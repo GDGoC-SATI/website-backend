@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Event from '../models/Event.js';
+import { broadcastRealtimeUpdate } from '../utils/realtimeService.js';
 
 export const getEvents = async (req, res) => {
   try {
@@ -39,6 +40,7 @@ export const createEvent = async (req, res) => {
     }
 
     const event = await Event.create({ ...req.body, slug });
+    broadcastRealtimeUpdate('events', 'CREATE', event);
     res.status(201).json({ success: true, message: 'Event created successfully', data: event });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -56,6 +58,7 @@ export const updateEvent = async (req, res) => {
     if (!event) {
       return res.status(404).json({ success: false, message: 'Event not found' });
     }
+    broadcastRealtimeUpdate('events', 'UPDATE', event);
     res.status(200).json({ success: true, message: 'Event updated successfully', data: event });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -70,6 +73,7 @@ export const deleteEvent = async (req, res) => {
     if (!event) {
       return res.status(404).json({ success: false, message: 'Event not found' });
     }
+    broadcastRealtimeUpdate('events', 'DELETE', { id: req.params.id });
     res.status(200).json({ success: true, message: 'Event deleted successfully' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

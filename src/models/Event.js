@@ -49,6 +49,14 @@ const eventSchema = new mongoose.Schema(
       type: String,
       default: () => new Date().getFullYear().toString(),
     },
+    status: {
+      type: String,
+      default: 'Planning',
+    },
+    timeline: {
+      type: Array,
+      default: [],
+    },
     order: {
       type: Number,
       default: 0,

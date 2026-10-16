@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Event from '../models/Event.js';
 
 export const getEvents = async (req, res) => {
@@ -11,7 +12,11 @@ export const getEvents = async (req, res) => {
 
 export const getEventBySlug = async (req, res) => {
   try {
-    const event = await Event.findOne({ slug: req.params.slug });
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.slug);
+    const query = isObjectId
+      ? { $or: [{ slug: req.params.slug }, { _id: req.params.slug }] }
+      : { slug: req.params.slug };
+    const event = await Event.findOne(query);
     if (!event) {
       return res.status(404).json({ success: false, message: 'Event not found' });
     }
@@ -30,7 +35,7 @@ export const createEvent = async (req, res) => {
 
     let existing = await Event.findOne({ slug });
     if (existing) {
-      slug = `${slug}-${Date.now().toString().slice(-4)}`;
+      slug = slug + '-' + Date.now().toString().slice(-4);
     }
 
     const event = await Event.create({ ...req.body, slug });
@@ -42,7 +47,9 @@ export const createEvent = async (req, res) => {
 
 export const updateEvent = async (req, res) => {
   try {
-    const event = await Event.findByIdAndUpdate(req.params.id, req.body, {
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+    const filter = isObjectId ? { _id: req.params.id } : { slug: req.params.id };
+    const event = await Event.findOneAndUpdate(filter, req.body, {
       new: true,
       runValidators: true,
     });
@@ -57,7 +64,9 @@ export const updateEvent = async (req, res) => {
 
 export const deleteEvent = async (req, res) => {
   try {
-    const event = await Event.findByIdAndDelete(req.params.id);
+    const isObjectId = mongoose.Types.ObjectId.isValid(req.params.id);
+    const filter = isObjectId ? { _id: req.params.id } : { slug: req.params.id };
+    const event = await Event.findOneAndDelete(filter);
     if (!event) {
       return res.status(404).json({ success: false, message: 'Event not found' });
     }

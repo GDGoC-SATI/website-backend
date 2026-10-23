@@ -64,14 +64,17 @@ export const getAllSections = async (req, res) => {
 export const updateSection = async (req, res) => {
   try {
     const { title, description, data } = req.body;
+    const sectionData = data !== undefined ? data : req.body;
+    const updateFields = {
+      sectionKey: req.params.key,
+      data: sectionData,
+    };
+    if (title !== undefined) updateFields.title = title;
+    if (description !== undefined) updateFields.description = description;
+
     const section = await SiteSection.findOneAndUpdate(
       { sectionKey: req.params.key },
-      {
-        sectionKey: req.params.key,
-        title,
-        description,
-        data,
-      },
+      updateFields,
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
     broadcastRealtimeUpdate('sections', 'UPDATE', { sectionKey: req.params.key });

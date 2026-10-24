@@ -57,6 +57,10 @@ const eventSchema = new mongoose.Schema(
       type: Array,
       default: [],
     },
+    winners: {
+      type: Array,
+      default: [],
+    },
     order: {
       type: Number,
       default: 0,
